@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const FB_APP_ID = process.env.FB_APP_ID!;
 const FB_APP_SECRET = process.env.FB_APP_SECRET!;
-const REDIRECT_URI = process.env.INSTA_REDIRECT_URI!;
 // e.g. "https://yourdomain.com/api/insta/callback"
 
 export async function GET(req: NextRequest) {
