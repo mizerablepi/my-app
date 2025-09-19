@@ -2,7 +2,7 @@
 import React from "react";
 
 const INSTAGRAM_OAUTH_URL =
-  "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=2654704444876350&redirect_uri=https://api-accounts.afbex.com/stage/&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights";
+  "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=2654704444876350&redirect_uri=https://my-app-iota-ecru.vercel.app/api/insta/callback&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights";
 
 export default function InstaLoginPage() {
   const handleLogin = () => {
