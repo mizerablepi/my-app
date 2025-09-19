@@ -26,11 +26,14 @@ export async function GET(req: NextRequest) {
         new URLSearchParams({
           client_id: "2654704444876350",
           client_secret: "bd9ee66fb075944241df30120120d00d",
-          redirect_uri: "https://api-accounts.afbex.com/stage/",
+          redirect_uri:
+            "https://my-app-iota-ecru.vercel.app/api/insta/callback",
           code,
         }),
       { method: "GET" }
     );
+
+    console.log("tokenRes", tokenRes);
 
     const tokenData = await tokenRes.json();
 
@@ -48,8 +51,8 @@ export async function GET(req: NextRequest) {
       `https://graph.facebook.com/v21.0/oauth/access_token?` +
         new URLSearchParams({
           grant_type: "fb_exchange_token",
-          client_id: FB_APP_ID,
-          client_secret: FB_APP_SECRET,
+          client_id: "2654704444876350",
+          client_secret: "bd9ee66fb075944241df30120120d00d",
           fb_exchange_token: shortLivedToken,
         }),
       { method: "GET" }
