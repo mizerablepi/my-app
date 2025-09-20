@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const FB_APP_ID = process.env.FB_APP_ID!;
 const FB_APP_SECRET = process.env.FB_APP_SECRET!;
-// e.g. "https://yourdomain.com/api/insta/callback"
+const REDIRECT_URI =
+  process.env.INSTAGRAM_REDIRECT_URI ||
+  "https://my-app-iota-ecru.vercel.app/api/insta/callback";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -20,22 +22,27 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1️⃣ Exchange code for short-lived access token
+    // 1️⃣ Exchange code for short-lived access token (Instagram Basic Display)
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?` +
-        new URLSearchParams({
-          client_id: "2654704444876350",
-          client_secret: "bd9ee66fb075944241df30120120d00d",
-          redirect_uri:
-            "https://my-app-iota-ecru.vercel.app/api/insta/callback",
+      "https://api.instagram.com/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: FB_APP_ID,
+          client_secret: FB_APP_SECRET,
+          grant_type: "authorization_code",
+          redirect_uri: REDIRECT_URI,
           code,
         }),
-      { method: "GET" }
+      }
     );
 
-    console.log("tokenRes", tokenRes);
-
+    console.log("tokenRes status:", tokenRes.status);
     const tokenData = await tokenRes.json();
+    console.log("tokenData:", tokenData);
 
     if (!tokenRes.ok) {
       return NextResponse.json(
@@ -45,20 +52,21 @@ export async function GET(req: NextRequest) {
     }
 
     const shortLivedToken = tokenData.access_token;
+    const userId = tokenData.user_id;
 
-    // 2️⃣ Exchange for long-lived token
+    // 2️⃣ Exchange for long-lived token (Instagram Basic Display)
     const longTokenRes = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?` +
+      `https://graph.instagram.com/access_token?` +
         new URLSearchParams({
-          grant_type: "fb_exchange_token",
-          client_id: "2654704444876350",
-          client_secret: "bd9ee66fb075944241df30120120d00d",
-          fb_exchange_token: shortLivedToken,
+          grant_type: "ig_exchange_token",
+          client_secret: FB_APP_SECRET,
+          access_token: shortLivedToken,
         }),
       { method: "GET" }
     );
 
     const longTokenData = await longTokenRes.json();
+    console.log("longTokenData:", longTokenData);
 
     if (!longTokenRes.ok) {
       return NextResponse.json(
@@ -68,24 +76,29 @@ export async function GET(req: NextRequest) {
     }
 
     const longLivedToken = longTokenData.access_token;
+    const expiresIn = longTokenData.expires_in;
 
-    // 3️⃣ (Optional) Get Instagram Business Account ID
-    // First, get user’s Facebook Pages
-    const pagesRes = await fetch(
-      `https://graph.facebook.com/v21.0/me/accounts?access_token=${longLivedToken}`,
+    // 3️⃣ Get user's basic profile info
+    const profileRes = await fetch(
+      `https://graph.instagram.com/me?fields=id,username&access_token=${longLivedToken}`,
       { method: "GET" }
     );
-    const pagesData = await pagesRes.json();
 
-    // Each page may have an instagram_business_account field
-    // You’d store longLivedToken + page/IG IDs in DB
+    const profileData = await profileRes.json();
+    console.log("profileData:", profileData);
+
+    // Store the token securely in your database here
+    // const user = await saveUserToken(userId, longLivedToken, expiresIn);
 
     return NextResponse.json({
       success: true,
       token: longLivedToken,
-      pages: pagesData,
+      expiresIn,
+      user: profileData,
+      message: "Successfully authenticated with Instagram",
     });
   } catch (err: any) {
+    console.error("OAuth error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 500 }
